@@ -1,0 +1,27 @@
+language: generic
+sudo: required
+
+services:
+    - docker
+
+before_install:
+  - docker build -t vaztimur/client-test -f ./client/dev.Dockerfile ./client # build context
+  # second test for example server
+
+script: # primary test running section. if any of the scripts exists with other then 0 then travis ci will assume that test failed
+  - docker run -e CI=true vaztimur/client-test npm test
+  # second test for example server
+
+after_success:
+  - docker build -t vaztimur/multi-client ./client
+  - docker build -t vaztimur/multi-nginx ./nginx
+  - docker build -t vaztimur/multi-server ./server
+  - docker build -t vaztimur/multi-worker ./worker
+# Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+# Take those images and push them to docker hub
+  - docker push vaztimur/multi-client
+  - docker push vaztimur/multi-nginx
+  - docker push vaztimur/multi-server
+  - docker push vaztimur/multi-worker
+  
